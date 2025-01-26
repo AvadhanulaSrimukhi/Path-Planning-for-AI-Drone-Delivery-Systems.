@@ -1,0 +1,30 @@
+import Map, { Marker, Source, Layer } from "react-map-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent } from "@/components/ui/card";
+import { motion } from "framer-motion";                                                                                                                const DronePathPlanner = () => {
+  const [start, setStart] = useState("");
+  const [destination, setDestination] = useState("");
+  const [path, setPath] = useState(null);
+
+  const handleOptimizeRoute = async () => {
+    // Mock AI optimization call
+    const optimizedPath = {
+      type: "FeatureCollection",
+      features: [import React, { useState } from "react";
+        {
+          type: "Feature",
+          geometry: {
+            type: "LineString",
+            coordinates: [
+              [-122.420679, 37.772537], // Example start
+              [-122.429092, 37.784735], // Example intermediate point
+              [-122.435005, 37.791295], // Example destination
+            ],
+          },
+        },
+      ],
+    };
+    setPath(optimizedPath);
+  };
