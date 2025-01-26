@@ -1,0 +1,90 @@
+import numpy as np
+import tensorflow as tf
+import networkx as nx
+from scipy.spatial import distance
+
+class DronePathPlanner:
+    def _init_(self, delivery_map, no_fly_zones, max_altitude):
+        """
+        Initialize the path planner.
+
+        Parameters:
+        - delivery_map: List of tuples representing delivery locations (x, y).
+        - no_fly_zones: List of polygons [(x1, y1), (x2, y2), ...] defining restricted areas.
+        - max_altitude: Maximum allowable altitude for the drone.
+        """
+        self.delivery_map = delivery_map
+        self.no_fly_zones = no_fly_zones
+        self.max_altitude = max_altitude
+        self.graph = self.build_graph()
+
+    def build_graph(self):
+        """Construct a graph from the delivery map, excluding no-fly zones."""
+        G = nx.Graph()
+        
+        for i, point1 in enumerate(self.delivery_map):
+            for j, point2 in enumerate(self.delivery_map):
+                if i != j and self.is_path_safe(point1, point2):
+                    weight = distance.euclidean(point1, point2)
+                    G.add_edge(i, j, weight=weight)
+        
+        return G
+
+    def is_path_safe(self, start, end):
+        """Check if a path between two points is safe (doesn't intersect no-fly zones)."""
+        for zone in self.no_fly_zones:
+            if self.line_intersects_polygon(start, end, zone):
+                return False
+        return True
+
+    @staticmethod
+    def line_intersects_polygon(start, end, polygon):
+        """Check if a line intersects a polygon."""
+        from shapely.geometry import LineString, Polygon
+
+        line = LineString([start, end])
+        poly = Polygon(polygon)
+
+        return line.intersects(poly)
+
+    def plan_path(self, start_index, end_index):
+        """Plan the shortest path between two points on the graph."""
+        try:
+            path = nx.shortest_path(self.graph, source=start_index, target=end_index, weight='weight')
+            return [self.delivery_map[i] for i in path]
+        except nx.NetworkXNoPath:
+            return None
+
+    def optimize_path_with_ai(self, path):
+        """Use AI to optimize the path for efficiency and safety."""
+        model = self.load_ai_model()
+        optimized_path = model.predict(np.array(path))
+        return optimized_path
+
+    @staticmethod
+    def load_ai_model():
+        """Load a pre-trained AI model for path optimization."""
+        model = tf.keras.Sequential([
+            tf.keras.layers.Dense(64, activation='relu', input_shape=(2,)),
+            tf.keras.layers.Dense(64, activation='relu'),
+            tf.keras.layers.Dense(2, activation='linear')
+        ])
+
+        # Load pre-trained weights (path_to_model_weights should be replaced with the actual path)
+        model.load_weights("path_to_model_weights.h5")
+
+        return model
+
+# Example Usage
+delivery_locations = [(0, 0), (10, 10), (20, 5), (15, 20)]
+no_fly_zones = [[(5, 5), (6, 5), (6, 6), (5, 6)]]
+planner = DronePathPlanner(delivery_map=delivery_locations, no_fly_zones=no_fly_zones, max_altitude=100)
+
+start, end = 0, 3
+path = planner.plan_path(start, end)
+if path:
+    print("Initial Path:", path)
+    optimized_path = planner.optimize_path_with_ai(path)
+    print("Optimized Path:", optimized_path)
+else:
+    print("No path found between the given points.")
